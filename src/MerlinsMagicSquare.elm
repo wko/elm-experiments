@@ -7,7 +7,7 @@ import Html.Events exposing (onClick)
 import Process
 import Random
 import Set exposing (Set)
-import Task
+import Html exposing (h1)
 
 
 
@@ -19,17 +19,15 @@ main =
 
 
 
--- MODEL
--- The positions are from 1 to 9
--- A position is in the set if it is on, otherwise it is off
-
 
 type GameState
     = Initializing
     | Playing
     | Won
 
-
+-- MODEL
+-- The positions are from 1 to 9
+-- A position is in the set if it is on, otherwise it is off
 type alias MagicSquare =
     Set Int
 
@@ -59,8 +57,7 @@ goalState =
 
 
 -- UPDATE
-
-
+-- Types of messages that can be sent to the update function to update the model
 type Msg
     = NewMagicSquare MagicSquare
     | Select Int
@@ -176,9 +173,13 @@ view appState =
             (row - 1) * 3 + col
     in
     div []
-        [ if appState.gameState == Won then
+        [ h1 [] [ text "Merlin's Magic Square"]
+        , div []
+            [ text "The goal is to turn all the cells on (X), except the middle one (O)."
+            , text "You can only turn on a cell and its neighbors. \n"
+            ]
+        , if appState.gameState == Won then
             text "You won!"
-
           else
             text "Click on a cell to toggle it and its neighbors"
         , table []
@@ -205,7 +206,8 @@ view appState =
 
 
 ------ AI ------
--- We use depth first search to find the winning moves
+-- We use breadth first search to find the winning moves
+-- Since there are only 2^9 possible states, this is fast enough
 
 
 hash : MagicSquare -> String
@@ -219,15 +221,14 @@ findWinningMoves model =
 
 
 
--- the frontier contains the nodes we have not visited yet and nothing we have visited
 -- apperently we can't use a set of MagicSquare as a key in a set
--- so we use a hash instead :(
-
-
+-- so we use a hash instead. I'm very disappointed by this :(
 type alias MagicSquareHash =
     String
 
 
+
+-- the frontier contains the nodes we have not visited yet and nothing we have visited
 searchStep : Set MagicSquareHash -> List { path : List Int, state : MagicSquare } -> List Int
 searchStep visited frontier =
     let
