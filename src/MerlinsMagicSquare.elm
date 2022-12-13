@@ -2,10 +2,12 @@ module MerlinsMagicSquare exposing (..)
 
 import Browser
 import Debug
-import Html exposing (Html, div, table, td, text, tr)
+import Html exposing (Html, button, div, table, td, text, tr)
 import Html.Events exposing (onClick)
+import Process
 import Random
 import Set exposing (Set)
+import Task
 
 
 
@@ -35,12 +37,14 @@ type alias MagicSquare =
 type alias AppState =
     { gameState : GameState
     , magicSquare : MagicSquare
+    , showHints : Bool
+    , winningMoves : Maybe (List Int)
     }
 
 
 initState : () -> ( AppState, Cmd Msg )
 initState _ =
-    ( { gameState = Initializing, magicSquare = Set.empty }, Random.generate NewMagicSquare magicSquareGenerator )
+    ( { gameState = Initializing, magicSquare = Set.empty, showHints = False, winningMoves = Nothing }, Random.generate NewMagicSquare magicSquareGenerator )
 
 
 magicSquareGenerator : Random.Generator MagicSquare
@@ -60,13 +64,21 @@ goalState =
 type Msg
     = NewMagicSquare MagicSquare
     | Select Int
+    | ToggleHints
+    | RestartGame
 
 
 update : Msg -> AppState -> ( AppState, Cmd Msg )
 update msg state =
     case msg of
+        RestartGame ->
+            initState ()
+
+        ToggleHints ->
+            ( { state | showHints = not state.showHints }, Cmd.none )
+
         NewMagicSquare magicSquare ->
-            ( { gameState = Playing, magicSquare = magicSquare }, Cmd.none )
+            ( { state | gameState = Playing, magicSquare = magicSquare }, Cmd.none )
 
         Select pos ->
             case state.gameState of
@@ -79,10 +91,10 @@ update msg state =
                             toggle state.magicSquare (changeList pos)
                     in
                     if nextSquare == goalState then
-                        ( { gameState = Won, magicSquare = nextSquare }, Cmd.none )
+                        ( { state | gameState = Won, magicSquare = nextSquare }, Cmd.none )
 
                     else
-                        ( { gameState = Playing, magicSquare = nextSquare }, Cmd.none )
+                        ( { state | gameState = Playing, magicSquare = nextSquare }, Cmd.none )
 
                 Won ->
                     ( state, Cmd.none )
@@ -171,9 +183,22 @@ view appState =
             text "Click on a cell to toggle it and its neighbors"
         , table []
             ([ 1, 2, 3 ] |> List.map viewRow)
-        , div []
-            [ text "The winning moves are: "
-            , text << Debug.toString <| findWinningMoves appState.magicSquare
+        , if appState.showHints then
+            div []
+                [ text "The winning moves are: "
+                , text << Debug.toString <| findWinningMoves appState.magicSquare
+                ]
+
+          else
+            div []
+                [ text "Number of moves this game can be won: "
+                , text << String.fromInt <| List.length <| findWinningMoves appState.magicSquare
+                ]
+        , button [ onClick ToggleHints ]
+            [ text "Click here to toggle hints"
+            ]
+        , button [ onClick RestartGame ]
+            [ text "Click here to start a new game"
             ]
         ]
 
