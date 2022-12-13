@@ -171,4 +171,69 @@ view appState =
             text "Click on a cell to toggle it and its neighbors"
         , table []
             ([ 1, 2, 3 ] |> List.map viewRow)
+        , div []
+            [ text "The winning moves are: "
+            , text << Debug.toString <| findWinningMoves appState.magicSquare
+            ]
         ]
+
+
+
+------ AI ------
+-- We use depth first search to find the winning moves
+
+
+hash : MagicSquare -> String
+hash model =
+    Set.toList model |> List.map String.fromInt |> String.join ""
+
+
+findWinningMoves : MagicSquare -> List Int
+findWinningMoves model =
+    List.reverse <| searchStep Set.empty [ { path = [], state = model } ]
+
+
+
+-- the frontier contains the nodes we have not visited yet and nothing we have visited
+-- apperently we can't use a set of MagicSquare as a key in a set
+-- so we use a hash instead :(
+
+
+type alias MagicSquareHash =
+    String
+
+
+searchStep : Set MagicSquareHash -> List { path : List Int, state : MagicSquare } -> List Int
+searchStep visited frontier =
+    let
+        goalNodes =
+            List.filter (\node -> node.state == goalState) frontier
+    in
+    case List.head goalNodes of
+        Just node ->
+            node.path
+
+        -- We found a winning move
+        Nothing ->
+            let
+                -- Expand frontier nodes
+                newFrontier : List { path : List Int, state : MagicSquare }
+                newFrontier =
+                    List.concatMap (\node -> expand node.state |> List.map (\( x, y ) -> { path = x :: node.path, state = y })) frontier
+
+                -- Insert frontier nodes into visited
+                newVisited : Set MagicSquareHash
+                newVisited =
+                    List.foldl (\node vs -> Set.insert (hash node.state) vs) visited frontier
+
+                -- Remove visited nodes from frontier
+                newFrontierUnseen : List { path : List Int, state : MagicSquare }
+                newFrontierUnseen =
+                    List.filter (\node -> not (Set.member (hash node.state) newVisited)) newFrontier
+            in
+            searchStep newVisited newFrontierUnseen
+
+
+expand : MagicSquare -> List ( Int, MagicSquare )
+expand model =
+    List.map (\x -> ( x, toggle model (changeList x) )) (List.range 1 9)
