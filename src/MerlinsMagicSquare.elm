@@ -7,7 +7,7 @@ import Html.Events exposing (onClick)
 import Process
 import Random
 import Set exposing (Set)
-import Html exposing (h1)
+import Html exposing (h1, h2)
 
 
 
@@ -97,40 +97,23 @@ update msg state =
                     ( state, Cmd.none )
 
 
+-- The cells that need to be changed when a cell is clicked
 changeList : Int -> List Int
 changeList pos =
     case pos of
-        1 ->
-            [ 1, 2, 4, 5 ]
-
-        2 ->
-            [ 1, 2, 3 ]
-
-        3 ->
-            [ 2, 3, 5, 6 ]
-
-        4 ->
-            [ 1, 4, 7 ]
-
-        5 ->
-            [ 2, 4, 5, 6, 8 ]
-
-        6 ->
-            [ 3, 6, 9 ]
-
-        7 ->
-            [ 4, 5, 7, 8 ]
-
-        8 ->
-            [ 7, 8, 9 ]
-
-        9 ->
-            [ 5, 6, 8, 9 ]
-
-        _ ->
-            []
+        1 -> [ 1, 2, 4, 5 ]
+        2 -> [ 1, 2, 3 ]
+        3 -> [ 2, 3, 5, 6 ]
+        4 -> [ 1, 4, 7 ]
+        5 -> [ 2, 4, 5, 6, 8 ]
+        6 -> [ 3, 6, 9 ]
+        7 -> [ 4, 5, 7, 8 ]
+        8 -> [ 7, 8, 9 ]
+        9 -> [ 5, 6, 8, 9 ]
+        _ -> []
 
 
+-- toggle all cells in the list in a magic square
 toggle : MagicSquare -> List Int -> MagicSquare
 toggle model xs =
     List.foldl toggleCell model xs
@@ -147,8 +130,6 @@ toggleCell x model =
 
 
 -- VIEW
-
-
 view : AppState -> Html Msg
 view appState =
     let
@@ -179,7 +160,7 @@ view appState =
             , text "You can only turn on a cell and its neighbors. \n"
             ]
         , if appState.gameState == Won then
-            text "You won!"
+            h2 [] [text "You won!"]
           else
             text "Click on a cell to toggle it and its neighbors"
         , table []
